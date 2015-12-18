@@ -9,7 +9,7 @@ class ofApp : public ofBaseApp{
 		void setup();
 		void update();
 		void draw();
-		void drawScene();
+		
 
 		void keyPressed  (int key);
 		void keyReleased (int key);
@@ -24,8 +24,11 @@ class ofApp : public ofBaseApp{
 		
 		ofTrueTypeFont font;
 		ofShader shader;
-		bool doShader;
+		bool bShowHelp;
 
+		void drawInteractionArea();
+		void drawScene();
+		
 		ofxOculusDK2		oculusRift;
 		ofEasyCam			cam;
 };

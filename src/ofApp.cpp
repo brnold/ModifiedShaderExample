@@ -3,35 +3,24 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
 
-	//oculusRift.baseCamera = &cam; //attach to your camera
+	oculusRift.baseCamera = &cam; //attach to your camera
     //opens the device, an Oculus must be plugged in 
     //as it uses the params returned from the head set to configure 
     //the resolution settings
-    //oculusRift.setup();
+    oculusRift.setup();
 
-	ofBackground(34, 60, 34);
-	ofSetVerticalSync(false);
-	ofEnableAlphaBlending();
-		
-	//we load a font and tell OF to make outlines so we can draw it as GL shapes rather than textures
-	font.loadFont("type/verdana.ttf", 100, true, false, true, 0.4, 72);
-	#ifdef TARGET_OPENGLES
-	shader.load("shaders_gles/noise.vert","shaders_gles/noise.frag");
-	#else
-	if(ofGetGLProgrammableRenderer()){
-		shader.load("shaders_gl3/noise.vert", "shaders_gl3/noise.frag");
-	}else{
-		shader.load("shaders/noise.vert", "shaders/noise.frag");
-	}
-	#endif
-
-	doShader = true;	
-
+	
+	ofSetVerticalSync(true);
+	
+	// this uses depth information for occlusion
+	// rather than always drawing things on top of each other
+	ofEnableDepthTest();
+	
+	// this sets the camera's distance from the object
 	cam.setDistance(100);
-
-	cam.begin();
-	cam.end();
-    cam.setGlobalPosition(0, 0, 0);
+	
+	ofSetCircleResolution(64);
+	bShowHelp = true;
 }
 
 //--------------------------------------------------------------
@@ -49,52 +38,95 @@ void ofApp::draw(){
 	//cam.begin();
     //cam.end();
     //now render using oculus flow
-    //oculusRift.beginLeftEye();
-    //drawScene();
-    //oculusRift.endLeftEye();
-
-    //oculusRift.beginRightEye();
-    cam.begin();
+    oculusRift.beginLeftEye();
     drawScene();
-    cam.end();
-    //oculusRift.endRightEye();
+    oculusRift.endLeftEye();
+
+    oculusRift.beginRightEye();
+    //cam.begin();
+    drawScene();
+    //cam.end();
+    oculusRift.endRightEye();
 
     //pushes the render texture to the viewer
-    //oculusRift.draw();
+    oculusRift.draw();
 }
 
 void ofApp::drawScene(){
-	ofSetColor(200);
-	ofDrawBitmapString("'s' toggles shader", 10, 20);
-
-	ofSetColor(245, 58, 135);
+	
+	cam.begin();		
+	ofRotateX(ofRadToDeg(.5));
+	ofRotateY(ofRadToDeg(-.5));
+	
+	ofBackground(0);
+	
+	ofSetColor(255,0,0);
 	ofFill();
+	ofDrawBox(30);
+	ofNoFill();
+	ofSetColor(0);
+	ofDrawBox(30);
 	
-	if( doShader ){
-		shader.begin();
-			//we want to pass in some varrying values to animate our type / color 
-			shader.setUniform1f("timeValX", ofGetElapsedTimef() * 0.1 );
-			shader.setUniform1f("timeValY", -ofGetElapsedTimef() * 0.18 );
-			
-			//we also pass in the mouse position 
-			//we have to transform the coords to what the shader is expecting which is 0,0 in the center and y axis flipped. 
-			shader.setUniform2f("mouse", mouseX - ofGetWidth()/2, ofGetHeight()/2-mouseY );
+	ofPushMatrix();
+	ofTranslate(0,0,20);
+	ofSetColor(0,0,255);
+	ofFill();
+	ofDrawBox(5);
+	ofNoFill();
+	ofSetColor(0);
+	ofDrawBox(5);
+	ofPopMatrix();
+	cam.end();
+	drawInteractionArea();
+	ofSetColor(255);
+	string msg = string("Using mouse inputs to navigate (press 'c' to toggle): ") + (cam.getMouseInputEnabled() ? "YES" : "NO");
+	msg += string("\nShowing help (press 'h' to toggle): ")+ (bShowHelp ? "YES" : "NO");
+	if (bShowHelp) {
+		msg += "\n\nLEFT MOUSE BUTTON DRAG:\nStart dragging INSIDE the yellow circle -> camera XY rotation .\nStart dragging OUTSIDE the yellow circle -> camera Z rotation (roll).\n\n";
+		msg += "LEFT MOUSE BUTTON DRAG + TRANSLATION KEY (" + ofToString(cam.getTranslationKey()) + ") PRESSED\n";
+		msg += "OR MIDDLE MOUSE BUTTON (if available):\n";
+		msg += "move over XY axes (truck and boom).\n\n";
+		msg += "RIGHT MOUSE BUTTON:\n";
+		msg += "move over Z axis (dolly)";
+	}
+	msg += "\n\nfps: " + ofToString(ofGetFrameRate(), 2);
+	ofDrawBitmapStringHighlight(msg, 10, 20);
+}
 
-	}
+void ofApp::drawInteractionArea(){
+	ofRectangle vp = ofGetCurrentViewport();
+	float r = MIN(vp.width, vp.height) * 0.5f;
+	float x = vp.width * 0.5f;
+	float y = vp.height * 0.5f;
 	
-		//finally draw our text
-		font.drawStringAsShapes("openFrameworks", 90, 260);
-	
-	if( doShader ){
-		shader.end();
-	}
+	ofPushStyle();
+	ofSetLineWidth(3);
+	ofSetColor(255, 255, 0);
+	ofNoFill();
+	glDepthMask(false);
+	ofCircle(x, y, r);
+	glDepthMask(true);
+	ofPopStyle();
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed  (int key){ 
-	if( key == 's' ){
-		doShader = !doShader;
-	}	
+		switch(key) {
+		case 'C':
+		case 'c':
+			if(cam.getMouseInputEnabled()) cam.disableMouseInput();
+			else cam.enableMouseInput();
+			break;
+			
+		case 'F':
+		case 'f':
+			ofToggleFullscreen();
+			break;
+		case 'H':
+		case 'h':
+			bShowHelp ^=true;
+			break;
+	}
 }
 
 //--------------------------------------------------------------
