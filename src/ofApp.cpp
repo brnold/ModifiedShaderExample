@@ -38,13 +38,17 @@ void ofApp::draw(){
 	//cam.begin();
     //cam.end();
     //now render using oculus flow
+   
+   
+    
     oculusRift.beginLeftEye();
     drawScene();
     oculusRift.endLeftEye();
 
     oculusRift.beginRightEye();
     //cam.begin();
-    drawScene();
+    //drawScene();
+    drawInteractionArea();
     //cam.end();
     oculusRift.endRightEye();
 
