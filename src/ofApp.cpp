@@ -15,13 +15,19 @@ void ofApp::setup(){
 	// this uses depth information for occlusion
 	// rather than always drawing things on top of each other
 	ofEnableDepthTest();
+
+
+	ofEnableNormalizedTexCoords();
+
+	ofLogo.loadImage("of.png");
+	
+	// draw the ofBox outlines with some weight
+	ofSetLineWidth(10);
 	
 	// this sets the camera's distance from the object
-	cam.setDistance(100);
+	cam.setDistance(1000);
 	
-	ofSetCircleResolution(64);
-	bShowHelp = true;
-}
+}	
 
 //--------------------------------------------------------------
 void ofApp::update(){
@@ -35,7 +41,7 @@ void ofApp::draw(){
 
 	//move your camera wherever you'd like, this becomes the base
     //position of the view
-	//cam.begin();
+	cam.begin();
     //cam.end();
     //now render using oculus flow
    
@@ -43,58 +49,67 @@ void ofApp::draw(){
     
     oculusRift.beginLeftEye();
     drawScene();
+
     oculusRift.endLeftEye();
 
     oculusRift.beginRightEye();
-    //cam.begin();
-    //drawScene();
-    drawInteractionArea();
-    //cam.end();
+   
+    drawScene();  
+
     oculusRift.endRightEye();
+
+    cam.end();
 
     //pushes the render texture to the viewer
     oculusRift.draw();
 }
 
+
+
+
 void ofApp::drawScene(){
 	
-	cam.begin();		
-	ofRotateX(ofRadToDeg(.5));
-	ofRotateY(ofRadToDeg(-.5));
+	//ofBackground(0, 0, 30);
 	
-	ofBackground(0);
+	float movementSpeed = .1;
+	float cloudSize = ofGetWidth() / 2;
+	float maxBoxSize = 100;
+	float spacing = 1;
+	int boxCount = 100;
 	
-	ofSetColor(255,0,0);
-	ofFill();
-	ofDrawBox(30);
-	ofNoFill();
-	ofSetColor(0);
-	ofDrawBox(30);
+	//cam.begin();
 	
-	ofPushMatrix();
-	ofTranslate(0,0,20);
-	ofSetColor(0,0,255);
-	ofFill();
-	ofDrawBox(5);
-	ofNoFill();
-	ofSetColor(0);
-	ofDrawBox(5);
-	ofPopMatrix();
-	cam.end();
-	drawInteractionArea();
-	ofSetColor(255);
-	string msg = string("Using mouse inputs to navigate (press 'c' to toggle): ") + (cam.getMouseInputEnabled() ? "YES" : "NO");
-	msg += string("\nShowing help (press 'h' to toggle): ")+ (bShowHelp ? "YES" : "NO");
-	if (bShowHelp) {
-		msg += "\n\nLEFT MOUSE BUTTON DRAG:\nStart dragging INSIDE the yellow circle -> camera XY rotation .\nStart dragging OUTSIDE the yellow circle -> camera Z rotation (roll).\n\n";
-		msg += "LEFT MOUSE BUTTON DRAG + TRANSLATION KEY (" + ofToString(cam.getTranslationKey()) + ") PRESSED\n";
-		msg += "OR MIDDLE MOUSE BUTTON (if available):\n";
-		msg += "move over XY axes (truck and boom).\n\n";
-		msg += "RIGHT MOUSE BUTTON:\n";
-		msg += "move over Z axis (dolly)";
+	for(int i = 0; i < boxCount; i++) {
+		ofPushMatrix();
+		
+		float t = (ofGetElapsedTimef() + i * spacing) * movementSpeed;
+		ofVec3f pos(
+			ofSignedNoise(t, 0, 0),
+			ofSignedNoise(0, t, 0),
+			ofSignedNoise(0, 0, t));
+		
+		float boxSize = maxBoxSize * ofNoise(pos.x, pos.y, pos.z);
+		
+		pos *= cloudSize;
+		ofTranslate(pos);
+		ofRotateX(pos.x);
+		ofRotateY(pos.y);
+		ofRotateZ(pos.z);
+		
+		ofLogo.bind();
+		ofFill();
+		ofSetColor(255);
+		ofDrawBox(boxSize);
+		ofLogo.unbind();
+		
+		ofNoFill();
+		ofSetColor(ofColor::fromHsb(sinf(t) * 128 + 128, 255, 255));
+		ofDrawBox(boxSize * 1.1f);
+		
+		ofPopMatrix();
 	}
-	msg += "\n\nfps: " + ofToString(ofGetFrameRate(), 2);
-	ofDrawBitmapStringHighlight(msg, 10, 20);
+	
+	//cam.end();
 }
 
 void ofApp::drawInteractionArea(){

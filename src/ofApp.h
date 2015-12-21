@@ -28,7 +28,10 @@ class ofApp : public ofBaseApp{
 
 		void drawInteractionArea();
 		void drawScene();
-		
+
+		ofImage ofLogo; // the OF logo
+		ofLight light; // creates a light and enables lighting
+
 		ofxOculusDK2		oculusRift;
 		ofEasyCam			cam;
 };
